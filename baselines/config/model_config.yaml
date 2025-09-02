@@ -5,6 +5,7 @@ tofu-llama2-7b:
   answer_tag: ""
   flash_attention2: "false"
   gradient_checkpointing: "true"
+  local_model_path: "/home/yangshuhan/data/BackupRestore/data/models/Llama-2-7b-chat-hf"
 tofu-llama3-8b:
   hf_key: "meta-llama/meta-llama-3-8b-instruct"
   question_start_tag: "<|start_header_id|>user<|end_header_id|>\n\n"
@@ -12,6 +13,7 @@ tofu-llama3-8b:
   answer_tag: ""
   flash_attention2: "false"
   gradient_checkpointing: "true"
+  local_model_path: ""
 tofu-gemma-2-2b-it:
   hf_key: "google/gemma-2-2b-it"
   question_start_tag: "<start_of_turn>"
@@ -19,6 +21,7 @@ tofu-gemma-2-2b-it:
   answer_tag: ""
   flash_attention2: "false"
   gradient_checkpointing: "true"
+  local_model_path: "/home/yangshuhan/data/BackupRestore/data/models/gemma-2-2b-it"
 kud-llama2-7b:
   hf_key: "meta-llama/llama-2-7b-chat-hf"
   question_start_tag: ""
@@ -26,6 +29,7 @@ kud-llama2-7b:
   answer_tag: ""
   flash_attention2: "false"
   gradient_checkpointing: "true"
+  local_model_path: "/home/yangshuhan/data/BackupRestore/data/models/Llama-2-7b-chat-hf"
 kud-llama3-8b:
   hf_key: "meta-llama/meta-llama-3-8b-instruct"
   question_start_tag: ""
@@ -33,6 +37,7 @@ kud-llama3-8b:
   answer_tag: ""
   flash_attention2: "false"
   gradient_checkpointing: "true"
+  local_model_path: ""
 kud-gemma-2-2b-it:
   hf_key: "google/gemma-2-2b-it"
   question_start_tag: ""
@@ -40,6 +45,7 @@ kud-gemma-2-2b-it:
   answer_tag: ""
   flash_attention2: "false"
   gradient_checkpointing: "true"
+  local_model_path: "/home/yangshuhan/data/BackupRestore/data/models/gemma-2-2b-it"
 phi:
   hf_key: "microsoft/phi-1_5"
   question_start_tag: "Question: "
@@ -47,6 +53,7 @@ phi:
   answer_tag: "Answer: "
   flash_attention2: "false"
   gradient_checkpointing: "false"
+  local_model_path: ""
 stablelm:
   hf_key: "stabilityai/stablelm-3b-4e1t"
   question_start_tag: "Question: "
@@ -54,6 +61,7 @@ stablelm:
   answer_tag: "Answer: "
   flash_attention2: "false"
   gradient_checkpointing: "false"
+  local_model_path: ""
 pythia-1.4:
   hf_key: "EleutherAI/pythia-1.4b-deduped"
   question_start_tag: "Question: "
@@ -61,4 +69,5 @@ pythia-1.4:
   answer_tag: "Answer: "
   flash_attention2: "false"
   gradient_checkpointing: "false"
+  local_model_path: ""
 

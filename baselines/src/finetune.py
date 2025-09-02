@@ -23,6 +23,9 @@ def finetune(cfg):
     print(f"num_devices: {num_devices}")
 
     model_cfg = get_model_identifiers_from_yaml(cfg.model_family)
+    # Fix: add local model_path
+    if model_cfg["local_model_path"] != "":
+        model_path = model_cfg["local_model_path"]
     model_id = model_cfg["hf_key"]
 
     Path(cfg.save_dir).mkdir(parents=True, exist_ok=True)
@@ -33,9 +36,11 @@ def finetune(cfg):
             OmegaConf.save(cfg, f)
 
     # offline mode
-    # tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model_path = "/home/yangshuhan/data/BackupRestore/data/models/Llama-2-7b-chat-hf"
-    tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
+    if model_path != "":
+        tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+    # model_path = "/home/yangshuhan/data/BackupRestore/data/models/gemma-2-2b-it" #  Llama-2-7b-chat-hf
 
     tokenizer.pad_token = tokenizer.eos_token
 

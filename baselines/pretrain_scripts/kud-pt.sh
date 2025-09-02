@@ -10,6 +10,12 @@ save_dir="../../paper_models/kud-gemma-2-2b-it_lora_privacy"
 num_epochs=10
 # CUDA_VISIBLE_DEVICES=0 torchrun --nproc_per_node=1 --master_port=$master_port ../pretrain.py --config-name=finetune_lora.yaml batch_size=16 gradient_accumulation_steps=4 model_family=${model_family} lr=${lr} num_epochs=${num_epochs} data_path=${data_path} save_dir=${save_dir} 
 
+echo "model_family: ${model_family}"
+echo "lr: ${lr}"
+echo "data_path: ${data_path}"
+echo "save_dir: ${save_dir}"
+echo "num_epochs: ${num_epochs}"
+
 # Create logs directory if it doesn't exist
 mkdir -p ../../logs/pretrain
 

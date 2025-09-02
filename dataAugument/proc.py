@@ -4,6 +4,8 @@ from utils import split_text, create_payload, invoke_llm_and_parse_response, mer
 from copy import deepcopy
 import concurrent.futures
 import argparse
+import datetime
+
 
 question_payload_template = {"idx": None, "text": None, "prompt": None, "variant_type": None, "response": None, "model": None}
 text_payload_template = {"idx": None, "text": None, "part": None, "prompt": None, "variant_type": None, "response": None, "model": None}
@@ -154,6 +156,12 @@ if __name__ == "__main__":
 
     data_path = args.data_path
     model = args.model
+    
+    # 保存的结果文件名增加data_path.split("/")[1]，也就是dataset的下一级目录KnowUnDo，同时增加数据集文件名unlearn_train，最后增加当前时间
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    save_path = f"temp/processed_data_{data_path.split('/')[1]}_{Path(data_path).stem}_{current_time}.json"
+    print("save_path:", save_path)
+    
     if "tofu" in data_path.lower():
         text_column = "question"
         label_column = "answer"
@@ -164,11 +172,6 @@ if __name__ == "__main__":
         results = process_qa(data_path, model)
     else:
         raise ValueError("Unsupported data format")
-    
-    
-    # 保存的结果文件名增加data_path.split("/")[1]，也就是dataset的下一级目录KnowUnDo，同时增加数据集文件名unlearn_train，最后增加当前时间
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    save_path = f"temp/processed_data_{data_path.split('/')[1]}_{Path(data_path).stem}_{current_time}.json"
     
     with open(save_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
