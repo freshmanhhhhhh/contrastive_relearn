@@ -20,7 +20,7 @@ def load_json(file_path:str)->dict:
 # ================== Variants Generation ==================
 zhipu_client = ZhipuAI(api_key="YOUR KEY") # enter your APIKey
 qwen_client = OpenAI(api_key="YOUR KEY", base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",)   
-deepseek_client = OpenAI(api_key="YOUR KEY", base_url="https://api.deepseek.com")
+deepseek_client = OpenAI(api_key="sk-b1aab7d798ad4b6caf1a41a355b85d45", base_url="https://api.deepseek.com")
 
 def llm_api(prompt:str, model:str)->List[str]:
     """
@@ -79,7 +79,7 @@ def create_payload(payload, templates, model, template_field="question_variants"
         if "qid" in new_payload:
             variant_type += f"_{new_payload['qid']}"
         if "check" in variant_type:
-            new_payload['variant_type'] = new_payload["variant_type"]
+            new_payload['variant_type'] = new_payload["variant_type"] # None
         else:
             new_payload['variant_type'] = variant_type
         

@@ -9,7 +9,7 @@ question_payload_template = {"idx": None, "text": None, "prompt": None, "variant
 text_payload_template = {"idx": None, "text": None, "part": None, "prompt": None, "variant_type": None, "response": None, "model": None}
 
 #load templates
-with open("templates.json", "r") as f:
+with open("templates.json", "r") as f: # modify
     templates = json.load(f)
 # create temp folder if not exists
 Path("temp").mkdir(parents=True, exist_ok=True)
@@ -46,6 +46,7 @@ def process_qa(data_path: str, model:str, max_workers=8):
     #     json.dump(question_results_dict, f, indent=2, ensure_ascii=False)
 
     # process answer variants
+    # 重试3次进行生成和校验，以免LLM返回格式不正确、生成内容不符合要求等而失败。
     passed_idx_v = {}
     passed_results_list = []
     for _ in range(3):
@@ -56,10 +57,10 @@ def process_qa(data_path: str, model:str, max_workers=8):
             questions = []
             # original question
             questions.append(data[idx][text_column])
-            # question variants
+            # question variants *4
             questions.extend(question_results_dict[idx]['response'])
-            for qid, q in enumerate(questions):
-                blocks = split_text(answer, strategy="length", chunk_size=800)
+            for qid, q in enumerate(questions): # 原始问题和4种变体都用于
+                blocks = split_text(answer, strategy="length", chunk_size=800) # 每800个tokens分为一个block
                 for j, block in enumerate(blocks):
                     text_payload = deepcopy(text_payload_template)
                     text_payload['idx'] = idx
@@ -147,8 +148,8 @@ def process_qa(data_path: str, model:str, max_workers=8):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str, default="../dataset/TOFU/forget10.jsonl", help="Path to the data file")
-    parser.add_argument("--model", type=str, default="zhipu", help="Model to use")
+    parser.add_argument("--data_path", type=str, default="dataset/KnowUnDo/privacy/unlearn_train.json", help="Path to the data file")
+    parser.add_argument("--model", type=str, default="deepseek", help="Model to use")
     args = parser.parse_args()
 
     data_path = args.data_path
@@ -163,7 +164,12 @@ if __name__ == "__main__":
         results = process_qa(data_path, model)
     else:
         raise ValueError("Unsupported data format")
-
-    with open("temp/results.json", "w", encoding="utf-8") as f:
-                json.dump(results, f, indent=2, ensure_ascii=False)
+    
+    
+    # 保存的结果文件名增加data_path.split("/")[1]，也就是dataset的下一级目录KnowUnDo，同时增加数据集文件名unlearn_train，最后增加当前时间
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    save_path = f"temp/processed_data_{data_path.split('/')[1]}_{Path(data_path).stem}_{current_time}.json"
+    
+    with open(save_path, "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
     

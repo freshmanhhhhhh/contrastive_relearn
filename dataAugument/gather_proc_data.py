@@ -7,6 +7,9 @@ from datasets import load_dataset
 from pathlib import Path
 
 def gather(data, text_column, labels_column):
+    """
+    原始问题与原始回答匹配，问题变种与对应
+    """
     new_results = []
 
     for item in data:

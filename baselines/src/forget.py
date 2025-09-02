@@ -84,7 +84,7 @@ def unlearn(cfg):
             retain_dataset=retain_dataset,
         )
     elif loss_type in "relearn":
-        dataset = ForgetRetainDataset(
+        dataset = ForgetRetainDataset( # TODO: 数据集的选择，合并改写后的D_f和D_g作为D_f
             forget_dataset=forget_dataset,
             retain_dataset=None,
         )

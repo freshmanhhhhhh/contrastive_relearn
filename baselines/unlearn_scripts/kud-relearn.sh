@@ -1,4 +1,6 @@
 #!/bin/bash
+export HYDRA_FULL_ERROR=1
+export HF_ENDPOINT=https://hf-mirror.com
 master_port=28131
 set -e
 
@@ -10,7 +12,7 @@ retain_data_path="../../dataset/KnowUnDo/${data_subset}/retention_train.json"
 idonknow_file_path="../../dataset/idontknow.txt"
 
 model_family=kud-llama2-7b
-model_path="../../paper_models/llama2-7b_lora_kud_privacy/"
+model_path="../../paper_models/kud-llama2-7b_lora_privacy/" # fix: remove the slash at the end
 lr=1e-5
 num_epochs=4
 ds_config="../config/ds_z0_config.json"

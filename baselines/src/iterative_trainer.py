@@ -218,8 +218,8 @@ class IterativeUnlearner(Trainer):
             loss_npo= -F.logsigmoid(self.beta * neg_log_ratio).mean() * 2 / self.beta 
             loss = loss_npo + kl_r
 
-        elif self.loss_type in "relearn":
-            assert x_r is None, "retain data is not None but loss type is relearn(gd)."     
+        elif self.loss_type in "relearn": # TODO: 增加判断逻辑，对于D_f进行对比学习，对于D_r不变，
+            assert x_r is None, "retain data is not None but loss type is relearn(gd)."  
             outputs_f = model(
                 x_f['input_ids'],
                 labels=x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone(),

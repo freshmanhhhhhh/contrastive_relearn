@@ -32,7 +32,11 @@ def finetune(cfg):
         with open(f'{cfg.save_dir}/cfg.yaml', 'w') as f:
             OmegaConf.save(cfg, f)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    # offline mode
+    # tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model_path = "/home/yangshuhan/data/BackupRestore/data/models/Llama-2-7b-chat-hf"
+    tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
+
     tokenizer.pad_token = tokenizer.eos_token
 
     max_length = cfg.max_length
@@ -43,6 +47,7 @@ def finetune(cfg):
         dataset = QADataset(
             data_file,
             tokenizer=tokenizer,
+            model_cfg=model_cfg,
             max_len=max_length
         )
     else:
@@ -77,7 +82,8 @@ def finetune(cfg):
             seed = cfg.seed,
         )
 
-    model = AutoModelForCausalLM.from_pretrained(model_id, use_flash_attention_2=model_cfg["flash_attention2"]=="true", torch_dtype=torch.bfloat16, trust_remote_code = True)
+    # model = AutoModelForCausalLM.from_pretrained(model_id, use_flash_attention_2=model_cfg["flash_attention2"]=="true", torch_dtype=torch.bfloat16, trust_remote_code = True)
+    model = AutoModelForCausalLM.from_pretrained(model_path, local_files_only=True, use_flash_attention_2=model_cfg["flash_attention2"]=="true", torch_dtype=torch.bfloat16, trust_remote_code = True)
     
     # Hot fix for https://discuss.huggingface.co/t/help-with-llama-2-finetuning-setup/50035
     model.generation_config.do_sample = True

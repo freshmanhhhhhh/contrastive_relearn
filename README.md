@@ -41,6 +41,7 @@ pip install flash-attn --no-build-isolation
 ## 🚀 Quick Start
 
 ### 1. Data Augmentation
+对每个问题生成4种类型的变体，包括调整表达语言，增加情境，增加噪声，逻辑逆向。对每个答案进行fuzzy生成五种表达
 ```bash
 cd dataAugument
 bash augu.sh
