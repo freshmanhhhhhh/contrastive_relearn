@@ -67,10 +67,19 @@ class IterativeUnlearner(Trainer):
         
         if self.loss_type in ["dpo","dpo_gdr","dpo_klr"]:
             x_f, x_r, x_i = x # 遗忘数据, 保留数据, "我不知道"数据
+            print("\n===x_f====\n",x_f)
+            print("\n===x_r===\n",x_r)
+            print("\n===x_i===\n",x_i)
+            
         elif self.loss_type in ["relearn_dpo", "relearn_dpo_gdr", "relearn_dpo_klr"]:
             x_p, x_n, x_r = x # 偏好数据, 负偏好数据, 保留数据
+            print("\n===x_p===\n",x_p)
+            print("\n===x_n===\n",x_n)
+            print("\n===x_r===\n",x_r)
         else:
             x_f, x_r = x # 遗忘数据, 保留数据
+            print("\n===x_f===\n",x_f)
+            print("\n===x_r===\n",x_r)
 
         ### 2. Calculate Loss Based on Loss Type ###
         ### ga,ga_klr,ga_gdr
@@ -333,181 +342,7 @@ class IterativeUnlearner(Trainer):
                     log_target=True
                 )
 
-                loss = loss + retain_loss
-
-        # Implement by ysh
-        elif self.loss_type in ["contrastive", "contrastive_klr", "contrastive_gdr"]:
-            # 对比学习实现：遗忘精确信息，保留语言能力
-            
-            # --- 1. 获取问答对的语义嵌入 ---
-            outputs_f = model(
-                x_f['input_ids'],
-                attention_mask=x_f['attention_mask'] if 'attention_mask' in x_f else torch.ones_like(x_f['input_ids'], dtype=torch.bool),
-                output_hidden_states=True
-            )
-            
-            # 提取最后一层hidden states
-            last_hidden_states = outputs_f.hidden_states[-1]  # [batch_size, seq_len, hidden_dim]
-            
-            # 使用答案部分的平均池化作为问答对嵌入
-            # 因为我们要学习"忘记精确答案，保留模糊表达"
-            if 'attention_mask' in x_f and 'labels' in x_f:
-                # 找到答案部分的token位置（labels中非-100的部分）-> 构造数据集时labels对于问题部分进行了掩盖
-                answer_mask = (x_f['labels'] != -100).float()  # [batch_size, seq_len]
-                attention_mask = x_f['attention_mask'].float()  # [batch_size, seq_len]
-                
-                # 结合attention_mask和answer_mask，只关注有效的答案token
-                valid_answer_mask = answer_mask * attention_mask  # [batch_size, seq_len]
-                
-                # 对答案部分进行平均池化
-                valid_answer_mask_expanded = valid_answer_mask.unsqueeze(-1)  # [batch_size, seq_len, 1]
-                weighted_hidden = last_hidden_states * valid_answer_mask_expanded  # [batch_size, seq_len, hidden_dim]
-                
-                # 计算每个样本答案部分的平均嵌入
-                sum_embeddings = weighted_hidden.sum(dim=1)  # [batch_size, hidden_dim]
-                sum_mask = valid_answer_mask.sum(dim=1, keepdim=True)  # [batch_size, 1]
-                sum_mask = torch.clamp(sum_mask, min=1e-8)  # 避免除零
-                
-                embeddings_f = sum_embeddings / sum_mask  # [batch_size, hidden_dim]
-            else:
-                # 备选方案：使用最后一个非padding token的嵌入
-                last_token_indices = x_f['attention_mask'].sum(dim=1) - 1
-                batch_indices = torch.arange(last_hidden_states.size(0), device=last_hidden_states.device)
-                embeddings_f = last_hidden_states[batch_indices, last_token_indices, :]
-            
-            # L2归一化，提高训练稳定性
-            embeddings_f = F.normalize(embeddings_f, p=2, dim=1)
-            
-            # --- 2. 组织样本结构 ---
-            # 假设batch组织：[orig_1, var_1_1, var_1_2, var_1_3, orig_2, var_2_1, ...]
-            batch_size, hidden_dim = embeddings_f.shape
-            if batch_size % 4 != 0:
-                raise ValueError("批次大小必须是4的倍数 (1个原始 + 3个变体)")
-            
-            num_groups = batch_size // 4
-            grouped_embeddings = embeddings_f.view(num_groups, 4, hidden_dim)
-            
-            # 分离原始问答（负样本）和变体问答（正样本池）
-            original_embeddings = grouped_embeddings[:, 0, :]  # [num_groups, hidden_dim] - 精确答案
-            variant_embeddings = grouped_embeddings[:, 1:, :]   # [num_groups, 3, hidden_dim] - 模糊变体
-            
-            # --- 3. 实现InfoNCE对比学习损失 ---
-            temperature = 0.07  # 温度系数
-            total_contrastive_loss = 0.0
-            
-            # 策略：每个变体作为锚点，学习远离原始精确答案，靠近其他变体
-            for anchor_idx in range(3):  # 3个变体轮流作为锚点
-                anchors = variant_embeddings[:, anchor_idx, :]  # [num_groups, hidden_dim]
-                
-                # 正样本：同一组的其他变体
-                positive_indices = [i for i in range(3) if i != anchor_idx]
-                positives = variant_embeddings[:, positive_indices, :].reshape(-1, hidden_dim)  # [num_groups*2, hidden_dim]
-                
-                # 负样本：原始精确答案 + 其他组的所有样本
-                negatives_list = []
-                
-                # 1) 当前组的原始答案（主要负样本）
-                negatives_list.append(original_embeddings)  # [num_groups, hidden_dim]
-                
-                # 2) 其他组的所有样本（次要负样本，增加难度）
-                other_groups_samples = []
-                for group_idx in range(num_groups):
-                    # 排除当前组
-                    other_group_indices = [i for i in range(num_groups) if i != group_idx]
-                    if other_group_indices:
-                        other_samples = grouped_embeddings[other_group_indices].reshape(-1, hidden_dim)
-                        other_groups_samples.append(other_samples)
-                
-                if other_groups_samples:
-                    all_other_samples = torch.cat(other_groups_samples, dim=0)
-                    # 随机采样，避免负样本过多
-                    sample_size = min(num_groups * 2, all_other_samples.size(0))
-                    indices = torch.randperm(all_other_samples.size(0))[:sample_size]
-                    sampled_others = all_other_samples[indices]
-                    negatives_list.append(sampled_others)
-                
-                negatives = torch.cat(negatives_list, dim=0)  # [total_negatives, hidden_dim]
-                
-                # 计算相似度分数
-                for group_idx in range(num_groups):
-                    anchor = anchors[group_idx:group_idx+1]  # [1, hidden_dim]
-                    
-                    # 当前组的正样本
-                    group_positives = variant_embeddings[group_idx, positive_indices, :]  # [2, hidden_dim]
-                    
-                    # 计算anchor与正样本的相似度
-                    pos_sim = F.cosine_similarity(anchor, group_positives, dim=1)  # [2]
-                    
-                    # 计算anchor与负样本的相似度  
-                    neg_sim = F.cosine_similarity(anchor, negatives, dim=1)  # [total_negatives]
-                    
-                    # InfoNCE损失：对于每个正样本分别计算
-                    for pos_idx in range(len(pos_sim)):
-                        # 将当前正样本与所有负样本组合
-                        logits = torch.cat([
-                            pos_sim[pos_idx:pos_idx+1],  # 当前正样本
-                            neg_sim  # 所有负样本
-                        ]) / temperature
-                        
-                        # 标签：正样本在第0位
-                        labels = torch.zeros(1, device=logits.device, dtype=torch.long)
-                        
-                        # 计算交叉熵损失
-                        total_contrastive_loss += F.cross_entropy(logits.unsqueeze(0), labels)
-            
-            # 对3个锚点的损失求平均
-            loss_con = total_contrastive_loss / 3
-            loss = loss_con
-            
-            # --- 4. 结合保留数据损失 ---
-            if self.loss_type == 'contrastive_gdr':
-                outputs_r = model(
-                    x_r['input_ids'],
-                    labels=x_r['labels'] if 'labels' in x_r else x_r['input_ids'].clone(),
-                    attention_mask=x_r['attention_mask'] if 'attention_mask' in x_r else torch.ones_like(x_r['input_ids'], dtype=torch.bool)
-                )
-                loss_r = outputs_r.loss # Loss_gdr
-                loss = loss_con + loss_r
-                
-            elif self.loss_type in ['contrastive_klr', 'contrastive_klr_gdr']:
-                outputs_r = model(
-                    x_r['input_ids'],
-                    labels=x_r['labels'] if 'labels' in x_r else x_r['input_ids'].clone(),
-                    attention_mask=x_r['attention_mask'] if 'attention_mask' in x_r else torch.ones_like(x_r['input_ids'], dtype=torch.bool)
-                )
-                loss_r = outputs_r.loss # Loss_gdr
-                
-                with torch.no_grad():
-                    outputs_r_ref = self.ref_model(
-                        x_r['input_ids'],
-                        labels=x_r['labels'] if 'labels' in x_r else x_r['input_ids'].clone(),
-                        attention_mask=x_r['attention_mask'] if 'attention_mask' in x_r else torch.ones_like(x_r['input_ids'], dtype=torch.bool)
-                    )
-                
-                outputs_r_logits = F.log_softmax(outputs_r.logits, dim=-1).view(-1, outputs_r.logits.shape[-1])
-                outputs_r_ref_logits = F.log_softmax(outputs_r_ref.logits, dim=-1).view(-1, outputs_r_ref.logits.shape[-1])
-                kl_r = F.kl_div(
-                    outputs_r_logits,
-                    outputs_r_ref_logits,
-                    reduction='batchmean',
-                    log_target=True
-                )
-                 
-                if self.loss_type == 'contrastive_klr':
-                    loss = loss_con + kl_r
-                elif self.loss_type == 'contrastive_klr_gdr':
-                    loss = loss_con + kl_r + loss_r
-                else:
-                    raise NotImplementedError("Cannot infer the given loss type.")
-                
-            else:
-                raise NotImplementedError("Cannot infer the given loss type.")
-            
-            # # 返回合适的outputs对象
-            # if 'outputs_r' in locals():
-            #     outputs_to_return = outputs_r
-            # else:
-            #     outputs_to_return = outputs_f            
+                loss = loss + retain_loss   
         
         else:
             raise NotImplementedError("Cannot infer the given loss type.")

@@ -16,7 +16,7 @@ model_path="../../paper_models/kud-llama2-7b_lora_privacy/" # fix: remove the sl
 lr=1e-5
 num_epochs=4
 ds_config="../config/ds_z0_config.json"
-loss_types=("relearn_klr_gdr")
+loss_types=("relearn") # relearn_klr_gdr
 max_length=512
 
 echo "model_family: ${model_family}"
