@@ -66,21 +66,22 @@ class IterativeUnlearner(Trainer):
         ### 1. Split the input ###
         
         if self.loss_type in ["dpo","dpo_gdr","dpo_klr"]:
-            x_f, x_r, x_i = x
+            x_f, x_r, x_i = x # 遗忘数据, 保留数据, "我不知道"数据
         elif self.loss_type in ["relearn_dpo", "relearn_dpo_gdr", "relearn_dpo_klr"]:
-            x_p, x_n, x_r = x
+            x_p, x_n, x_r = x # 偏好数据, 负偏好数据, 保留数据
         else:
-            x_f, x_r = x
+            x_f, x_r = x # 遗忘数据, 保留数据
 
         ### 2. Calculate Loss Based on Loss Type ###
+        ### ga,ga_klr,ga_gdr
         if self.loss_type == 'ga':
             outputs_f = model(
                 x_f['input_ids'],
                 labels=x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone(),
                 attention_mask=x_f['attention_mask'] if 'attention_mask' in x_f else torch.ones_like(x_f['input_ids'], dtype=torch.bool)
             )
-            loss_f = outputs_f.loss
-            loss = -loss_f
+            loss_f = outputs_f.loss # Loss_gdf
+            loss = -loss_f # 梯度上升
 
         elif self.loss_type == 'ga_gdr':
             outputs_f = model(
@@ -88,14 +89,14 @@ class IterativeUnlearner(Trainer):
                 labels=x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone(),
                 attention_mask=x_f['attention_mask'] if 'attention_mask' in x_f else torch.ones_like(x_f['input_ids'], dtype=torch.bool)
             )
-            loss_f = outputs_f.loss
+            loss_f = outputs_f.loss # Loss_gdf
 
             outputs_r = model(
                 x_r['input_ids'],
                 labels=x_r['labels'] if 'labels' in x_r else x_r['input_ids'].clone(),
                 attention_mask=x_r['attention_mask'] if 'attention_mask' in x_r else torch.ones_like(x_r['input_ids'], dtype=torch.bool)
             )
-            loss_r = outputs_r.loss
+            loss_r = outputs_r.loss # Loss_gdr
 
             loss = -loss_f + loss_r
 
@@ -105,14 +106,14 @@ class IterativeUnlearner(Trainer):
                 labels=x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone(),
                 attention_mask=x_f['attention_mask'] if 'attention_mask' in x_f else torch.ones_like(x_f['input_ids'], dtype=torch.bool)
             )
-            loss_f = outputs_f.loss
+            loss_f = outputs_f.loss # Loss_gdf
 
             outputs_r = model(
                 x_r['input_ids'],
                 labels=x_r['labels'] if 'labels' in x_r else x_r['input_ids'].clone(),
                 attention_mask=x_r['attention_mask'] if 'attention_mask' in x_r else torch.ones_like(x_r['input_ids'], dtype=torch.bool)
             )
-            loss_r = outputs_r.loss
+            loss_r = outputs_r.loss # Loss_gdr
 
             with torch.no_grad():
                 outputs_r_ref = self.ref_model(
@@ -132,6 +133,7 @@ class IterativeUnlearner(Trainer):
 
             loss = -loss_f + kl_r
 
+        ### npo,npo_gdr,npo_klr
         elif self.loss_type == 'npo':
             outputs_f = model(
                 x_f['input_ids'],
@@ -147,7 +149,7 @@ class IterativeUnlearner(Trainer):
 
             outputs_f_loss = get_batch_loss(outputs_f.logits, x_f['labels'])
             outputs_f_ref_loss = get_batch_loss(outputs_f_ref.logits, x_f['labels'])
-            neg_log_ratio = outputs_f_loss - outputs_f_ref_loss
+            neg_log_ratio = outputs_f_loss - outputs_f_ref_loss # neg_log_ratio = -log(P_model(x_f)) - (-log(P_ref(x_f))) = log(P_ref(x_f)) - log(P_model(x_f)) = log(P_ref(x_f) / P_model(x_f))
             loss = -F.logsigmoid(self.beta * neg_log_ratio).mean() * 2 / self.beta
 
         elif self.loss_type == 'npo_gdr':
@@ -218,14 +220,15 @@ class IterativeUnlearner(Trainer):
             loss_npo= -F.logsigmoid(self.beta * neg_log_ratio).mean() * 2 / self.beta 
             loss = loss_npo + kl_r
 
-        elif self.loss_type in "relearn": # TODO: 增加判断逻辑，对于D_f进行对比学习，对于D_r不变，
+        ### relearn,relearn_klr,relearn_klr_gdr,relearn_gdr, relearn_dpo, relearn_dpo_gdr, relearn_dpo_klr
+        elif self.loss_type in "relearn": # TODO: 增加判断逻辑，对于D_f进行对比学习，对于D_r不变
             assert x_r is None, "retain data is not None but loss type is relearn(gd)."  
             outputs_f = model(
                 x_f['input_ids'],
                 labels=x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone(),
                 attention_mask=x_f['attention_mask'] if 'attention_mask' in x_f else torch.ones_like(x_f['input_ids'], dtype=torch.bool)
             )
-            loss = outputs_f.loss
+            loss = outputs_f.loss # Loss_gdf
             
         elif self.loss_type in ["relearn_klr", "relearn_klr_gdr", "relearn_gdr"]:
             outputs_f = model(
@@ -233,14 +236,14 @@ class IterativeUnlearner(Trainer):
                 labels=x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone(),
                 attention_mask=x_f['attention_mask'] if 'attention_mask' in x_f else torch.ones_like(x_f['input_ids'], dtype=torch.bool)
             )
-            loss_f = outputs_f.loss
+            loss_f = outputs_f.loss # Loss_gdf
 
             outputs_r = model(
                 x_r['input_ids'],
                 labels=x_r['labels'] if 'labels' in x_r else x_r['input_ids'].clone(),
                 attention_mask=x_r['attention_mask'] if 'attention_mask' in x_r else torch.ones_like(x_r['input_ids'], dtype=torch.bool)
             )
-            loss_r = outputs_r.loss
+            loss_r = outputs_r.loss # Loss_gdr
             
             if self.loss_type == "relearn_gdr":
                 loss = loss_f + loss_r
@@ -332,6 +335,19 @@ class IterativeUnlearner(Trainer):
 
                 loss = loss + retain_loss
 
+        elif self.loss_type in ["contrastive", "contrastive_klr", "contrastive_gdr"]:
+            # TODO: 增加判断逻辑，对于D_f进行对比学习，对于D_r不变
+            
+            
+            outputs_f = model(
+                x_f['input_ids'],
+                labels=x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone(),
+                attention_mask=x_f['attention_mask'] if 'attention_mask' in x_f else torch.ones_like(x_f['input_ids'], dtype=torch.bool)
+            )
+            loss = outputs_f.loss # Loss_gdf
+            
+            
+        
         else:
             raise NotImplementedError("Cannot infer the given loss type.")
 

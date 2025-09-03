@@ -23,7 +23,6 @@ mkdir -p ../../logs/pretrain
 current_date=$(date +%Y%m%d_%H%M%S)
 log_file="../../logs/pretrain/${model_family}_lora_privacy_${current_date}.log"
 
-
 # Run command with output redirection
 CUDA_VISIBLE_DEVICES=0 torchrun --nproc_per_node=1 --master_port=$master_port ../pretrain.py \
     --config-name=finetune_lora.yaml \

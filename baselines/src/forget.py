@@ -59,6 +59,12 @@ def unlearn(cfg):
     # else:
     #     torch_format_dataset = TextForgetDatasetQA(cfg.data_path, tokenizer=tokenizer, model_family = cfg.model_family, max_length=max_length, split=cfg.split, loss_type=cfg.forget_loss)
 
+    # print("######################")
+    # print(cfg.model_path)
+    # print(cfg)
+    # print(config)
+    # print("######################")
+    
     config = AutoConfig.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(cfg.model_path, config=config, use_flash_attention_2=model_cfg["flash_attention2"]=="true", torch_dtype=torch.bfloat16, trust_remote_code = True)
 
