@@ -5,8 +5,12 @@ base_model_path="../paper_models/kud-llama2-7b_lora_privacy"
 
 memory_dir="../memory"
 
+echo "base_model_path: $base_model_path" 
+echo "memory_dir: $memory_dir"
+
 for adapter_dir in "$memory_dir"/*/; do
   adapter_name=$(basename "$adapter_dir")
+  echo "merge: $adapter_name" 
   
   if [[ "$adapter_name" == llama2* ]]  && [[ "$adapter_name" != *-full ]]; then
     for checkpoint_dir in "$adapter_dir"*/; do

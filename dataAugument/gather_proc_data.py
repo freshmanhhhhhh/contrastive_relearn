@@ -6,7 +6,7 @@ from copy import deepcopy
 from datasets import load_dataset
 from pathlib import Path
 
-def gather(data, text_column, labels_column):
+def gather(data, text_column, labels_column, num_variants=None):
     """
     原始问题与原始回答匹配，问题变种与对应
     """
@@ -15,6 +15,8 @@ def gather(data, text_column, labels_column):
     for item in data:
         new_result = []
         length = min(len(item['question_variants']), len(item['answer_variants']))
+        if num_variants is not None:
+            length = min(length, num_variants)
         new_result.append({
             text_column: item['original_question'],
             labels_column: item['original_answer'],
@@ -112,6 +114,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", type=str, default="../dataset/TOFU/forget10.jsonl", help="Path to the data file")
     parser.add_argument("--save_path", type=str, default="../dataset/augument_data/tofu.jsonl", help="Path to save the data file")
+    parser.add_argument("--contrastive", action="store_true", help="Enable contrastive learning mode")
+    parser.add_argument("--proc_data_path", type=str, default="temp/processed_data_TOFU_forget10.json", help="Path to the processed data file")
     args = parser.parse_args()
 
     if "tofu" in args.data_path.lower():
@@ -122,33 +126,37 @@ if __name__ == "__main__":
         labels_column = 'labels'
 
     # load the data
-    with open("temp/results.json", "r") as f:
+    with open(args.proc_data_path, "r") as f:
         data = json.load(f)
     
-    # gather the data
-    gathered_data = gather(data, text_column, labels_column)
-    
-    # if contrastive_learning:
+    if args.contrastive:
+        # For contrastive learning, gather 3 variants and only filter
+        gathered_data = gather(data, text_column, labels_column, num_variants=3)
+        final_data = filter_and_clean(gathered_data, text_column, labels_column)
+    else:
+        # Original processing pipeline
+        gathered_data = gather(data, text_column, labels_column)
+        
+        # shuffle the data
+        random.shuffle(gathered_data)
+        # filter and clean the data
+        filtered_data = filter_and_clean(gathered_data, text_column, labels_column)
 
-    
-    # shuffle the data
-    # random.shuffle(gathered_data)
-    # filter and clean the data
-    filtered_data = filter_and_clean(gathered_data, text_column, labels_column)
+        # cut the data
+        cut_data = cut(filtered_data, text_column, labels_column)
 
-    # cut the data
-    cut_data = cut(filtered_data, text_column, labels_column)
-
-    # add wikiqa data
-    final_data = add_wikiqa(cut_data, text_column, labels_column)
+        # add wikiqa data
+        final_data = add_wikiqa(cut_data, text_column, labels_column)
 
     # save the data
     # make sure the save_path parent directory exists
-    # Path(args.save_path).parent.mkdir(parents=True, exist_ok=True)
-    # if "tofu" in args.data_path.lower():
-    #     with open(args.save_path, "w", encoding='utf-8') as f:
-    #         for item in final_data:
-    #             f.write(json.dumps(item, ensure_ascii=False) + "\n")
-    # else:
-    #     with open(args.save_path, "w", encoding='utf-8') as f:
-    #         json.dump(final_data, f, ensure_ascii=False, indent=4)
+    Path(args.save_path).parent.mkdir(parents=True, exist_ok=True)
+    if "tofu" in args.data_path.lower():
+        with open(args.save_path, "w", encoding='utf-8') as f:
+            for item in final_data:
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
+    else:
+        with open(args.save_path, "w", encoding='utf-8') as f:
+            json.dump(final_data, f, ensure_ascii=False, indent=4)
+            
+    print("save done")

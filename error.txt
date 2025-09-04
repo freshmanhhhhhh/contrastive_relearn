@@ -1,0 +1,84 @@
+(relearn)  🐍 relearn  yangshuhan@x86_64-conda-linux-gnu  ~/data/BackupRestore/data/llm_sec/privacy/defense/unlearn/baselines/unlearn_scripts   main ±  bash kud-relearn.sh
+model_family: kud-llama2-7b
+model_path: ../../paper_models/kud-llama2-7b_lora_privacy/
+lr: 1e-5
+num_epochs: 4
+ds_config: ../config/ds_z0_config.json
+loss_types: contrastive
+max_length: 512
+forget_data_path: ../../dataset/augument_data/contrastive_data/KnowUnDo_privacy.json
+retain_data_path: ../../dataset/KnowUnDo/privacy/retention_train.json
+idonknow_file_path: ../../dataset/idontknow.txt
+contrastive
+[2025-09-03 16:45:57,710] [INFO] [real_accelerator.py:219:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+num_devices: 1
+######################
+Saving to:  ../../memory/kud-llama2-7b_contrastive_privacy_512_1e-5
+######################
+Directory already exists
+Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00,  5.14it/s]
+Error executing job with overrides: ['batch_size=1', 'gradient_accumulation_steps=4', 'model_family=kud-llama2-7b', 'lr=1e-5', 'model_path=../../paper_models/kud-llama2-7b_lora_privacy/', 'forget_data_path=../../dataset/augument_data/contrastive_data/KnowUnDo_privacy.json', 'retain_data_path=../../dataset/KnowUnDo/privacy/retention_train.json', 'idonknow_file_path=../../dataset/idontknow.txt', 'loss_type=contrastive', 'ds_config=../config/ds_z0_config.json', 'max_length=512', 'save_dir=../../memory/kud-llama2-7b_contrastive_privacy_512_1e-5', 'num_epochs=4']
+Traceback (most recent call last):
+  File "/data/yangshuhan/BackupRestore/data/llm_sec/privacy/defense/unlearn/baselines/unlearn_scripts/../unlearn.py", line 11, in <module>
+    main()
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+    raise ex
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 132, in run
+    _ = ret.return_value
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/hydra/core/utils.py", line 260, in return_value
+    raise self._return_value
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/data/yangshuhan/BackupRestore/data/llm_sec/privacy/defense/unlearn/baselines/unlearn_scripts/../unlearn.py", line 8, in main
+    it_unlearn(cfg)
+  File "/data/yangshuhan/BackupRestore/data/llm_sec/privacy/defense/unlearn/baselines/src/forget.py", line 82, in unlearn
+    forget_dataset = choose_dataset(forget_data_file, tokenizer, max_len=max_length, model_cfg=model_cfg)
+  File "/data/yangshuhan/BackupRestore/data/llm_sec/privacy/defense/unlearn/baselines/src/dataset.py", line 490, in choose_dataset
+    data = json.load(f)
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/json/decoder.py", line 340, in decode
+    raise JSONDecodeError("Extra data", s, end)
+json.decoder.JSONDecodeError: Extra data: line 2 column 1 (char 174)
+E0903 16:46:02.254000 3099332 site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 0 (pid: 3099407) of binary: /home/yangshuhan/anaconda3/envs/relearn/bin/python3.10
+Traceback (most recent call last):
+  File "/home/yangshuhan/anaconda3/envs/relearn/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/torch/distributed/run.py", line 919, in main
+    run(args)
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/torch/distributed/run.py", line 910, in run
+    elastic_launch(
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/yangshuhan/anaconda3/envs/relearn/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+../unlearn.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-09-03_16:46:02
+  host      : debian-24-24
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 3099407)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

@@ -22,6 +22,13 @@ def unlearn(cfg):
     forget_data_file = cfg.forget_data_path
     batch_size = cfg.batch_size
     gradient_accumulation_steps = cfg.gradient_accumulation_steps
+    print("batch_size: ", batch_size)
+    print("gradient_accumulation_steps: ", gradient_accumulation_steps)
+    
+    # TODO: 临时修改 for contrastive learning
+    batch_size = 4
+    gradient_accumulation_steps = 1
+    
     num_devices = int(os.environ.get('WORLD_SIZE', 1))
     print(f"num_devices: {num_devices}")
     project_name = getattr(cfg, 'project_name', 'my-unlearning-project')

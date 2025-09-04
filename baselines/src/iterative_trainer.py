@@ -336,7 +336,7 @@ class IterativeUnlearner(Trainer):
                 loss = loss + retain_loss
 
         # Implement by ysh
-        elif self.loss_type in ["contrastive", "contrastive_klr", "contrastive_gdr"]:
+        elif self.loss_type in ["contrastive", "contrastive_klr", "contrastive_gdr", "contrastive_klr_gdr"]:
             # 对比学习实现：遗忘精确信息，保留语言能力
             
             # --- 1. 获取问答对的语义嵌入 ---
@@ -460,7 +460,10 @@ class IterativeUnlearner(Trainer):
             loss = loss_con
             
             # --- 4. 结合保留数据损失 ---
-            if self.loss_type == 'contrastive_gdr':
+            if self.loss_type == 'contrastive':
+                loss = loss_con
+                
+            elif self.loss_type == 'contrastive_gdr':
                 outputs_r = model(
                     x_r['input_ids'],
                     labels=x_r['labels'] if 'labels' in x_r else x_r['input_ids'].clone(),
