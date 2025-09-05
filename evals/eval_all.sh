@@ -1,9 +1,10 @@
 #!/bin/bash
 set -e
 
-language_model_path="../../Llama-2-7b-chat-hf/" # Path to the HF model before pretraining
-embedding_model_path="../../all-MiniLM-L12-v2" # Path to the MiniLM model 
-entailment_model_path="../../deberta-v3-base-tasksource-nli" # Path to the nli model
+language_model_path="/home/yangshuhan/data/BackupRestore/data/models/Llama-2-7b-chat-hf" 
+# "../../Llama-2-7b-chat-hf/" # Path to the HF model before pretraining
+embedding_model_path="/home/yangshuhan/data/BackupRestore/data/models/all-MiniLM-L12-v2" # Path to the MiniLM model 
+entailment_model_path="/home/yangshuhan/data/BackupRestore/data/models/deberta-v3-base-tasksource-nli" # Path to the nli model
 
 memory_dir="../memory"
 

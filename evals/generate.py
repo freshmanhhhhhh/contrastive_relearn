@@ -111,6 +111,8 @@ if __name__ == '__main__':
     parser.add_argument("--output_file_forget", type=str,)
     parser.add_argument("--output_file_retain", type=str,)
     parser.add_argument("--use_vllm", action="store_true", default=False)
+    parser.add_argument("--tensor_parallel_size", type=int, default=1, help="Number of GPUs for tensor parallelism.")
+
 
     args = parser.parse_args()
     if args.tokenizer_path is None:
@@ -130,7 +132,12 @@ if __name__ == '__main__':
     if use_vllm:
         from vllm import LLM, SamplingParams
         print(model_path, tokenizer_path)
-        llm = LLM(model=model_path, tokenizer=tokenizer_path, gpu_memory_utilization=0.88, dtype='float16')
+        llm = LLM(model=model_path, 
+                  tokenizer=tokenizer_path, 
+                  gpu_memory_utilization=0.88, 
+                  dtype='float16',
+                  tensor_parallel_size=args.tensor_parallel_size
+                  )
         model = llm  
         device = None  
     else:

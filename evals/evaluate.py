@@ -12,7 +12,9 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from ..dataAugment.utils import llm_api
+import sys
+sys.path.append('..')
+from dataAugument.utils import llm_api
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
 import random

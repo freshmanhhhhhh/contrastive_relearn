@@ -2,12 +2,14 @@
 set -e
 
 memory_dir="../memory"
-pretrained__model_path="../paper_models/llama2-7b_lora_kud_privacy"
+pretrained__model_path="../paper_models/kud-llama2-7b_lora_privacy"
 
 forget_val_data_path="../dataset/KnowUnDo/privacy/unlearn_val.json"
 retain_val_data_path="../dataset/KnowUnDo/privacy/retention_val.json"
 
 output_file_dir="../kud-llama-inf"
+
+
 
 mkdir -p "$output_file_dir"
 
@@ -15,13 +17,15 @@ for adapter_dir in "$memory_dir"/*; do
     if [ -d "$adapter_dir" ]; then
         adapter_name=$(basename "$adapter_dir")
 
-        if [[ "$adapter_name" == llama2* && "$adapter_name" != *-full ]] ; then
+        if [[ "$adapter_name" == *llama2* && "$adapter_name" != *-full ]] ; then
             for checkpoint_dir in "$adapter_dir"/*; do
                 if [ -d "$checkpoint_dir" ]; then
                     checkpoint_name=$(basename "$checkpoint_dir")
+                    echo "checkpoint_name: $checkpoint_name"
 
                     if [[ "$checkpoint_name" == *-full ]]; then
                         method="${adapter_name}__${checkpoint_name}"
+                        echo "Evaluating method: $method"
 
                         output_file_forget="$output_file_dir/${method}__forget.json"
                         output_file_retain="$output_file_dir/${method}__retain.json"
