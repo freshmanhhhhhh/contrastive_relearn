@@ -25,7 +25,7 @@ model_path="../../paper_models/kud-llama2-7b_lora_privacy/" # fix: remove the sl
 lr=1e-5
 num_epochs=4
 ds_config="../config/ds_z0_config.json"
-loss_types=("contrastive" "contrastive_klr" "contrastive_gdr" "contrastive_klr_gdr") # relearn_klr_gdr
+loss_types=("contrastive_relearn_gdr") # relearn_klr_gdr "contrastive_relearn" "contrastive_relearn_klr" "contrastive_relearn_klr_gdr" "contrastive_relearn_gdr"
 max_length=512
 
 echo "model_family: ${model_family}"
